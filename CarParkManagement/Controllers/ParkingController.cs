@@ -45,6 +45,8 @@ namespace CarParkManagement.Controllers
         public async Task<IEnumerable<VechicleAllocationDto>>  OccupySpace([FromBody] OccupySpaceDto request)
         {
             bool toCheck = false;
+
+            //to ensure specific type of vehicles are accepted
             if (!Enum.TryParse<VehicleType>(request.VehicleType, true, out var vehicleTypeEnum))
             {
                 var response = new VechicleAllocationDto
@@ -56,6 +58,7 @@ namespace CarParkManagement.Controllers
 
             try
             {
+                //categorizing the vehicle types
                 Size size = vehicleTypeEnum switch
                 {
                     VehicleType.Saloon => Size.Small,
@@ -72,6 +75,7 @@ namespace CarParkManagement.Controllers
                                         .FirstOrDefaultAsync();
                 ParkingSpace space = await _db.ParkingSpaces.Where(p => p.IsOccupied == false).FirstAsync();
                 
+                //if the Registration no. does not exist, it should create a new one
                 Vehicle vehicle = _db.Vehicles
                     .FirstOrDefault(v => v.VehicleReg == request.VehicleReg)
                     ?? new Vehicle
@@ -88,7 +92,7 @@ namespace CarParkManagement.Controllers
                 }
                     
 
-
+                //confirm whether a car has been parked so as to ensure no duplication
 
                 ParkingAllocation? allocation = _db.ParkingAllocations.Where(p => p.VehicleId == vehicle.VehicleId && p.IsAvailable == true)
                                                    .Include(p=> p.ParkingSpace)
@@ -103,7 +107,7 @@ namespace CarParkManagement.Controllers
                                                 };
                 if (allocation.ParkingAllocationId == 0)
                 {
-                    //to ensure parkSpace is not ocuppied if it is still the same person
+                    //to ensure parkSpace is not ocuppied if it is still the same car
                     space.IsOccupied = true;
                     toCheck = true;
 
@@ -155,6 +159,7 @@ namespace CarParkManagement.Controllers
 
                 }).FirstOrDefaultAsync();
 
+                //to also ensure that a vehicle cannot be charged multiple times but once per usage
                 if (parkingTime == null || parkingTime.ParkAllocation == null || parkingTime.ParkAllocation.Charge != null)
                 {
                     ParkingExitDto resp = new ParkingExitDto
@@ -164,7 +169,7 @@ namespace CarParkManagement.Controllers
                     return [resp]; //NOTE THIS CAN ALSO BE WRITTEN USING NOTFOUND. JUST MAKING USE OF THE SWAGGER
                 }
 
-
+                //to calculate charges
                 DateTime TimeIn = parkingTime.ParkAllocation.TimeIn;
                 var (TotalMinutes, FiveMinuteInterval, TimeOut) = _timeCalculation.CalculateParkingDuration(TimeIn);
                 double charges = (double)_timeCalculation.CalculateIncurredCharges(TotalMinutes, FiveMinuteInterval, parkingTime.RatePerMinute, parkingTime.RatePer5Minute);
