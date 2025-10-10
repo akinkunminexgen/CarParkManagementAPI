@@ -1,0 +1,11 @@
+# Build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+packages/
+*.nupkg
+
+# Environment-specific settings
+appsettings.Development.json
