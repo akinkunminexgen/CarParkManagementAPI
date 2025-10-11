@@ -29,14 +29,14 @@ Build Solution or use the command line msbuild CarParkManagementAPI.sln
 
 ## Database setup
 
-Locate the file named script.sql in the project root.
-Run it in SQL Server Management Studio (SSMS) to generate the database and all required tables.
-The script also inserts default data for the ChargeRate table.
+- Locate the file named script.sql in the project root.
+- Run it in SQL Server Management Studio (SSMS) to generate the database and all required tables.
+- The script also inserts default data for the ChargeRate table.
 
 ## Run the API
 
-Set the project as the startup project in Visual Studio.
-Press F5 or run from the command line using:
+- Set the project as the startup project in Visual Studio.
+- Press F5 or run from the command line using:
 
 ```bash
 dotnet run
@@ -52,5 +52,5 @@ dotnet run
 
 ### Notes
 
-Default charge rates are automatically inserted from the database script.
-You can modify connection strings and environment settings in appsettings.json.
+- Default charge rates are automatically inserted from the database script.
+- You can modify connection strings and environment settings in appsettings.json.
