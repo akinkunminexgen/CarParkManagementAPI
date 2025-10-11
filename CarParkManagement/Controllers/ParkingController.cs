@@ -30,15 +30,26 @@ namespace CarParkManagement.Controllers
         [HttpGet]
         public async Task<IEnumerable<CheckAvailabilityDto>> GetAvailableSpace()
         {
-            var avail = await _db.ParkingSpaces.Where(p => !p.IsOccupied).CountAsync();
-            var occupied = await _db.ParkingSpaces.Where(p => p.IsOccupied == true).CountAsync();
-            CheckAvailabilityDto response = new CheckAvailabilityDto
+            try
             {
-                AvailableSpaces = avail,
-                OccupiedSpaces = occupied
-            };
+                var avail = await _db.ParkingSpaces.Where(p => !p.IsOccupied).CountAsync();
+                var occupied = await _db.ParkingSpaces.Where(p => p.IsOccupied == true).CountAsync();
+                CheckAvailabilityDto response = new CheckAvailabilityDto
+                {
+                    AvailableSpaces = avail,
+                    OccupiedSpaces = occupied
+                };
 
-            return [response]; //NOTE THIS CAN ALSO BE WRITTEN USING Ok. JUST MAKING USE OF THE SWAGGER
+                return [response]; //NOTE THIS CAN ALSO BE WRITTEN USING Ok. JUST MAKING USE OF THE SWAGGER
+            }
+            catch (Exception ex) {
+                CheckAvailabilityDto response = new CheckAvailabilityDto
+                {
+                    Message = ex.Message
+                };
+                return [response];
+            }
+            
         }
 
         [HttpPost]
