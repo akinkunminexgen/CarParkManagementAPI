@@ -16,50 +16,55 @@ namespace CarParkManagement.DataAccess.Data.IRepository.Repository
         {
             _db = db;
         }
-        public Task AddParkingAllocationAsync(ParkingAllocation parkingAllocation)
+        public async Task AddParkingAllocationAsync(ParkingAllocation parkingAllocation)
         {
-            throw new NotImplementedException();
+            _db.ParkingAllocations.Add(parkingAllocation);
+            await _db.SaveChangesAsync();
         }
 
-        public Task AddVehicleAsync(Vehicle vehicle)
+        public async Task AddVehicleAsync(Vehicle vehicle)
         {
-            throw new NotImplementedException();
+            _db.Vehicles.Add(vehicle);
+            await _db.SaveChangesAsync();
         }
 
         public async Task<int> GetAvailableSpaceCountAsync()
         {
-            int v = await _db.ParkingSpaces.Where(p => !p.IsOccupied).CountAsync();
-            throw new NotImplementedException();
+            return await _db.ParkingSpaces.Where(p => !p.IsOccupied).CountAsync();
+            
         }
 
-        public Task<ChargeRate?> GetChargeRateAsync(string size)
+        public async Task<ChargeRate?> GetChargeRateAsync(string size)
         {
-            throw new NotImplementedException();
+           return await _db.ChargeRates.Where(c => c.Size == size).FirstOrDefaultAsync();
         }
 
-        public Task<ParkingSpace> GetFirstAvailableSpaceAsync()
+        public async Task<ParkingSpace> GetFirstAvailableSpaceAsync()
         {
-            throw new NotImplementedException();
+            return await _db.ParkingSpaces.Where(p => p.IsOccupied == false).FirstAsync();
         }
 
-        public Task<int> GetOccupiedSpaceCountAsync()
+        public async Task<int> GetOccupiedSpaceCountAsync()
         {
-            throw new NotImplementedException();
+            return await _db.ParkingSpaces.Where(p => p.IsOccupied == true).CountAsync();
         }
 
-        public Task<ParkingAllocation> GetParkingAllocationAsync(int vehicleId)
+        public async Task<ParkingAllocation?> GetActiveParkingAllocationAsync(int vehicleId)
         {
-            throw new NotImplementedException();
+            return await _db.ParkingAllocations.Where(p => p.VehicleId == vehicleId && p.IsAvailable == true)
+                                                .Include(p => p.ParkingSpace)
+                                                .OrderByDescending(c => c.ParkingAllocationId)
+                                                .FirstOrDefaultAsync();
         }
 
-        public Task<Vehicle?> GetVehicleByRegAsync(string reg)
+        public async Task<Vehicle?> GetVehicleByRegAsync(string reg)
         {
-            throw new NotImplementedException();
+            return await _db.Vehicles.Include(v => v.ChargeRate).FirstOrDefaultAsync(v => v.VehicleReg == reg);
         }
 
-        public Task SaveChanges()
+        public async Task SaveChangesAsync()
         {
-            throw new NotImplementedException();
+            await _db.SaveChangesAsync();
         }
     }
 }

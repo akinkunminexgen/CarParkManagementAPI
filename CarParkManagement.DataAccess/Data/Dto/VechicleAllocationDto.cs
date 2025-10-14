@@ -2,9 +2,8 @@
 {
     public class VechicleAllocationDto
     {
-        public string? VehicleReg { get; set; }
-        public int? SpaceNumber { get; set; }
-        public DateTime? TimeIn { get; set; }
-        public string? message {  get; set; }
+        public required string VehicleReg { get; set; }
+        public required int SpaceNumber { get; set; }
+        public required DateTime TimeIn { get; set; }
     }
 }

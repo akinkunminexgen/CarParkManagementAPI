@@ -1,4 +1,7 @@
 using CarParkManagement.DataAccess.Data;
+using CarParkManagement.DataAccess.Data.IRepository;
+using CarParkManagement.DataAccess.Data.Services.IServices;
+using CarParkManagement.DataAccess.Data.IRepository.Repository;
 using CarParkManagement.DataAccess.Data.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +16,8 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<MyDbConnection>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ITimeCalculation, TimeCalculation>();
+builder.Services.AddScoped<IParkingRepository, ParkingRepository>();
+builder.Services.AddScoped<IParkingService, ParkingService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
