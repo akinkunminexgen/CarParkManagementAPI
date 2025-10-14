@@ -83,7 +83,7 @@ dotnet test
 - The additional £1 charge is added every 5 minutes a vehicle stays in the parking space.
 - The database used is either in-memory or any relational database (MSSQL/Postgres). The solution is designed to be easily configurable.
 
-## Benefits of this Architecture Used
+## Benefits of the Architecture Used
 - **Maintainability**: The separation of concerns into layers (Repository, Service, and Controller) makes it easy to change or extend functionality without affecting other parts of the application. For example, changes to the parking logic would be isolated in the service layer without needing to modify the controller.
 
 - **Testability**: This design allows for easy unit testing. You can mock the IParkingRepository in your service layer tests, ensuring that you are testing business logic without depending on a database.
