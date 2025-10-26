@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -60,6 +61,11 @@ namespace CarParkManagement.DataAccess.Data.IRepository.Repository
         public async Task<Vehicle?> GetVehicleByRegAsync(string reg)
         {
             return await _db.Vehicles.Include(v => v.ChargeRate).FirstOrDefaultAsync(v => v.VehicleReg == reg);
+        }
+
+        public async Task<List<ParkingAllocation>> GetParkingHistoryAsync(int vehicleId)
+        {
+            return await _db.ParkingAllocations.Where(v => v.VehicleId == vehicleId).ToListAsync();
         }
 
         public async Task SaveChangesAsync()

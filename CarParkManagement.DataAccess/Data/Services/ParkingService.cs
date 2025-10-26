@@ -6,7 +6,9 @@ using CarParkManagement.DataAccess.Data.Services.IServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CarParkManagement.DataAccess.Data.Services
@@ -127,6 +129,25 @@ namespace CarParkManagement.DataAccess.Data.Services
                 TimeIn = parkingAllocation.TimeIn,
                 TimeOut = TimeOut,
             };
+
+        }
+
+        public async Task <List<ParkingHistoryDto>> GetHistory(ParkingVehicleRegDto request)
+        {
+            var vehicleId = await _repo.GetVehicleByRegAsync(request.VehicleReg) ?? throw new InvalidOperationException($"Vehicle `{request.VehicleReg}` not found");
+            List<ParkingAllocation> parkallocations = await _repo.GetParkingHistoryAsync(vehicleId.VehicleId);
+            if (!parkallocations.Any())
+            {
+                throw new InvalidOperationException($"Vehicle with registration '{request.VehicleReg}' has no history.");
+            }
+
+            return parkallocations.Select(p => new ParkingHistoryDto
+            {
+                TimeIn = p.TimeIn,
+                TimeOut = p.TimeOut,
+                Charge = p.Charge,
+                VehicleReg = request.VehicleReg
+            }).ToList();
 
         }
     }

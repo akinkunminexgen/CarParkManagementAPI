@@ -17,6 +17,7 @@ namespace CarParkManagement.DataAccess.Data.IRepository
         Task<ParkingAllocation?> GetActiveParkingAllocationAsync(int vehicleId);
         Task AddVehicleAsync(Vehicle vehicle);
         Task AddParkingAllocationAsync(ParkingAllocation parkingAllocation);
+        Task<List<ParkingAllocation>> GetParkingHistoryAsync(int vehicleId);
         Task SaveChangesAsync();
 
     }

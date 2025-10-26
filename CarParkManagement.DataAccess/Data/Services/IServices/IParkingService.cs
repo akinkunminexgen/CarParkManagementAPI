@@ -12,6 +12,7 @@ namespace CarParkManagement.DataAccess.Data.Services.IServices
         Task<CheckAvailabilityDto> GetAvailableSpace();
         Task<VechicleAllocationDto> OccupySpace(OccupySpaceDto request);
         Task<ParkingExitDto> ToexitAway(ParkingVehicleRegDto request);
+        Task<List<ParkingHistoryDto>> GetHistory(ParkingVehicleRegDto request);
 
     }
 }

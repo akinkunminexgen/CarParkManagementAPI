@@ -74,5 +74,20 @@ namespace CarParkManagement.Controllers
             
         }
 
+        [HttpPost("history")]
+        public async Task<IActionResult> History([FromBody] ParkingVehicleRegDto request)
+        {
+            try
+            {
+                var response = await _parkingService.GetHistory(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+
+        }
+
     }
 }
