@@ -67,6 +67,27 @@ namespace CarParkManagement.DataAccess.Data.IRepository.Repository
         {
             return await _db.ParkingAllocations.Where(v => v.VehicleId == vehicleId).ToListAsync();
         }
+        public async Task<List<ParkingAllocation>> GetAverageParkingTimeAsync()
+        {
+            var threeWeeksAgo = DateTime.UtcNow.AddDays(-21);
+            return await _db.ParkingAllocations.Where(v => v.TimeOut != null && v.TimeOut >= threeWeeksAgo).ToListAsync();
+        }
+
+        public async Task<string?> GetMostCommonVehicleSizeAsync()
+        {
+            return await _db.Vehicles.Include(v => v.ChargeRate)
+                .GroupBy(g => g.ChargeRate.Size)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)                
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<decimal?> GetTotalRevenueAsync()
+        {
+            return await _db.ParkingAllocations
+                .Where(p => p.TimeOut != null)
+                .SumAsync(p => p.Charge);
+        }
 
         public async Task SaveChangesAsync()
         {

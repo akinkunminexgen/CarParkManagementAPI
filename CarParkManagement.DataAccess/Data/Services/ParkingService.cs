@@ -1,4 +1,5 @@
-﻿using CarParkManagement.DataAccess.Data.Dto;
+﻿using Azure.Core;
+using CarParkManagement.DataAccess.Data.Dto;
 using CarParkManagement.DataAccess.Data.Enums;
 using CarParkManagement.DataAccess.Data.IRepository;
 using CarParkManagement.DataAccess.Data.Models;
@@ -135,19 +136,41 @@ namespace CarParkManagement.DataAccess.Data.Services
         public async Task <List<ParkingHistoryDto>> GetHistory(ParkingVehicleRegDto request)
         {
             var vehicleId = await _repo.GetVehicleByRegAsync(request.VehicleReg) ?? throw new InvalidOperationException($"Vehicle `{request.VehicleReg}` not found");
-            List<ParkingAllocation> parkallocations = await _repo.GetParkingHistoryAsync(vehicleId.VehicleId);
-            if (!parkallocations.Any())
+            List<ParkingAllocation> parkingAllocations = await _repo.GetParkingHistoryAsync(vehicleId.VehicleId);
+            if (!parkingAllocations.Any())
             {
                 throw new InvalidOperationException($"Vehicle with registration '{request.VehicleReg}' has no history.");
             }
 
-            return parkallocations.Select(p => new ParkingHistoryDto
+            return parkingAllocations.Select(p => new ParkingHistoryDto
             {
                 TimeIn = p.TimeIn,
                 TimeOut = p.TimeOut,
                 Charge = p.Charge,
                 VehicleReg = request.VehicleReg
             }).ToList();
+
+        }
+
+        public async Task<ParkingStatisticDto> GetStatistics()
+        {
+            List<ParkingAllocation> parkingAllocations = await _repo.GetAverageParkingTimeAsync();
+            string commonVehicle = await _repo.GetMostCommonVehicleSizeAsync() ?? throw new InvalidOperationException("No records found");
+            decimal revenueEarned =  await _repo.GetTotalRevenueAsync() ?? throw new InvalidOperationException("Operation have not yet started");
+            if (!parkingAllocations.Any())
+                throw new InvalidOperationException($"No parking history for the past three weeks");
+
+            var averageParkingTime = parkingAllocations
+                        .Where(p => p.TimeOut.HasValue)
+                        .Average(v => (v.TimeOut.Value - v.TimeIn).TotalMinutes);
+
+            return new ParkingStatisticDto
+            {
+                AverageParkingTime = averageParkingTime,
+                MostCommonVehicleSize = commonVehicle,
+                TotalRevenueEarned = (double) revenueEarned
+            };
+
 
         }
     }

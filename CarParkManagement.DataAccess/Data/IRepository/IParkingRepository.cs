@@ -18,6 +18,9 @@ namespace CarParkManagement.DataAccess.Data.IRepository
         Task AddVehicleAsync(Vehicle vehicle);
         Task AddParkingAllocationAsync(ParkingAllocation parkingAllocation);
         Task<List<ParkingAllocation>> GetParkingHistoryAsync(int vehicleId);
+        Task<List<ParkingAllocation>> GetAverageParkingTimeAsync();
+        Task<string?> GetMostCommonVehicleSizeAsync();
+        Task<decimal?> GetTotalRevenueAsync();
         Task SaveChangesAsync();
 
     }

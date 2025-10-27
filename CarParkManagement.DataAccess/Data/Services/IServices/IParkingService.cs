@@ -13,6 +13,7 @@ namespace CarParkManagement.DataAccess.Data.Services.IServices
         Task<VechicleAllocationDto> OccupySpace(OccupySpaceDto request);
         Task<ParkingExitDto> ToexitAway(ParkingVehicleRegDto request);
         Task<List<ParkingHistoryDto>> GetHistory(ParkingVehicleRegDto request);
+        Task<ParkingStatisticDto> GetStatistics();
 
     }
 }
