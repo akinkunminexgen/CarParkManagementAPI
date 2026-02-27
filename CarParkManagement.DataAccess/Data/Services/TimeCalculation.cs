@@ -7,7 +7,7 @@ namespace CarParkManagement.DataAccess.Data.Services
         //this method is to break down minutes into intervals
         public (int TotalMinutes, int FiveMinuteInterval, DateTime TimeOut) CalculateParkingDuration(DateTime timeIn)
         {
-            DateTime now = DateTime.Now;
+            DateTime now = DateTime.UtcNow;
             TimeSpan duration = now - timeIn;
 
             int totalMins = (int)duration.TotalMinutes;

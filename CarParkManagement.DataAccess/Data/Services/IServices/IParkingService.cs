@@ -10,7 +10,7 @@ namespace CarParkManagement.DataAccess.Data.Services.IServices
     public interface IParkingService
     {
         Task<CheckAvailabilityDto> GetAvailableSpace();
-        Task<VechicleAllocationDto> OccupySpace(OccupySpaceDto request);
+        Task<VehicleAllocationDto> OccupySpace(OccupySpaceDto request);
         Task<ParkingExitDto> ToexitAway(ParkingVehicleRegDto request);
         Task<List<ParkingHistoryDto>> GetHistory(ParkingVehicleRegDto request);
         Task<ParkingStatisticDto> GetStatistics();

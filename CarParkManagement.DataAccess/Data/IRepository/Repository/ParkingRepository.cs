@@ -19,14 +19,12 @@ namespace CarParkManagement.DataAccess.Data.IRepository.Repository
         }
         public async Task AddParkingAllocationAsync(ParkingAllocation parkingAllocation)
         {
-            _db.ParkingAllocations.Add(parkingAllocation);
-            await _db.SaveChangesAsync();
+            await _db.ParkingAllocations.AddAsync(parkingAllocation);
         }
 
         public async Task AddVehicleAsync(Vehicle vehicle)
         {
-            _db.Vehicles.Add(vehicle);
-            await _db.SaveChangesAsync();
+            await _db.Vehicles.AddAsync(vehicle);
         }
 
         public async Task<int> GetAvailableSpaceCountAsync()
@@ -40,9 +38,12 @@ namespace CarParkManagement.DataAccess.Data.IRepository.Repository
            return await _db.ChargeRates.Where(c => c.Size == size).FirstOrDefaultAsync();
         }
 
-        public async Task<ParkingSpace> GetFirstAvailableSpaceAsync()
+        public async Task<ParkingSpace?> GetFirstAvailableSpaceAsync()
         {
-            return await _db.ParkingSpaces.Where(p => p.IsOccupied == false).FirstAsync();
+            return await _db.ParkingSpaces
+                .Where(p => !p.IsOccupied)
+                .OrderBy(p => p.ParkingSpaceId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<int> GetOccupiedSpaceCountAsync()

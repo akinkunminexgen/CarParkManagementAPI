@@ -1,6 +1,6 @@
 ﻿namespace CarParkManagement.DataAccess.Data.Dto
 {
-    public class VechicleAllocationDto
+    public class VehicleAllocationDto
     {
         public required string VehicleReg { get; set; }
         public required int SpaceNumber { get; set; }

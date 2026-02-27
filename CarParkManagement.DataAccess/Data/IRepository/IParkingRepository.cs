@@ -11,7 +11,7 @@ namespace CarParkManagement.DataAccess.Data.IRepository
     {
         Task<int> GetAvailableSpaceCountAsync();
         Task<int> GetOccupiedSpaceCountAsync();
-        Task<ParkingSpace> GetFirstAvailableSpaceAsync();
+        Task<ParkingSpace?> GetFirstAvailableSpaceAsync();
         Task<ChargeRate?> GetChargeRateAsync(string size);
         Task<Vehicle?> GetVehicleByRegAsync(string reg);
         Task<ParkingAllocation?> GetActiveParkingAllocationAsync(int vehicleId);

@@ -18,9 +18,11 @@ namespace CarParkManagement.DataAccess.Data.Services
     {
         private readonly IParkingRepository _repo;
         private readonly ITimeCalculation _timeCalculation;
-        public ParkingService(IParkingRepository repo, ITimeCalculation timeCalculation) { 
+        private readonly MyDbConnection _db;
+        public ParkingService(IParkingRepository repo, ITimeCalculation timeCalculation, MyDbConnection db) { 
             _repo = repo;
             _timeCalculation = timeCalculation;
+            _db = db;
         }
         public async Task<CheckAvailabilityDto> GetAvailableSpace()
         {
@@ -34,67 +36,80 @@ namespace CarParkManagement.DataAccess.Data.Services
             };
         }
 
-        public async Task<VechicleAllocationDto> OccupySpace(OccupySpaceDto request)
+        public async Task<VehicleAllocationDto> OccupySpace(OccupySpaceDto request)
         {
-            bool toCheck = false;
-
-            //to ensure specific type of vehicles are accepted
-            if (!Enum.TryParse<VehicleType>(request.VehicleType, true, out var vehicleTypeEnum))
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                throw new ArgumentException($"Invalid vehicle type. Allowed types: {string.Join(", ", Enum.GetNames(typeof(VehicleType)))}");
-            }
+                bool toCheck = false;
 
-            //categorizing the vehicle types
-            Size size = vehicleTypeEnum switch
-            {
-                VehicleType.Saloon => Size.Small,
-                VehicleType.Motorcycle => Size.Small,
-                VehicleType.SUV => Size.Medium,
-                VehicleType.Van => Size.Medium,
-                VehicleType.Truck => Size.Large,
-                _ => Size.Small
-            };
-            string siz = size.ToString();
-
-            ChargeRate chargeRate = await _repo.GetChargeRateAsync(siz) ?? throw new InvalidOperationException("Charge Rate not found");
-            ParkingSpace parkingSpace = await _repo.GetFirstAvailableSpaceAsync() ?? throw new InvalidOperationException("No available parking space");
-
-            Vehicle vehicle = await _repo.GetVehicleByRegAsync(request.VehicleReg)
-                    ?? new Vehicle
-                    {
-                        VehicleReg = request.VehicleReg,
-                        VehicleType = vehicleTypeEnum.ToString(),
-                        ChargeRateId = chargeRate.ChargeRateId,
-                    };
-            if (vehicle.VehicleId == 0)
-            {
-                 await _repo.AddVehicleAsync(vehicle);
-            }
-
-            ParkingAllocation parkingAllocation = await _repo.GetActiveParkingAllocationAsync(vehicle.VehicleId) ??
-                new ParkingAllocation
+                //to ensure specific type of vehicles are accepted
+                if (!Enum.TryParse<VehicleType>(request.VehicleType, true, out var vehicleTypeEnum))
                 {
-                    VehicleId = vehicle.VehicleId,
-                    ParkingSpaceId = parkingSpace.ParkingSpaceId,
-                    TimeIn = DateTime.Now,
-                    IsAvailable = true,
+                    throw new ArgumentException($"Invalid vehicle type. Allowed types: {string.Join(", ", Enum.GetNames(typeof(VehicleType)))}");
+                }
+
+                //categorizing the vehicle types
+                Size size = vehicleTypeEnum switch
+                {
+                    VehicleType.Saloon => Size.Small,
+                    VehicleType.Motorcycle => Size.Small,
+                    VehicleType.SUV => Size.Medium,
+                    VehicleType.Van => Size.Medium,
+                    VehicleType.Truck => Size.Large,
+                    _ => Size.Small
                 };
+                string siz = size.ToString();
 
-            if (parkingAllocation.ParkingAllocationId == 0)
-            {
-                //to ensure parkSpace is not ocuppied if it is still the same car
-                parkingSpace.IsOccupied = true;
-                toCheck = true;
+                ChargeRate chargeRate = await _repo.GetChargeRateAsync(siz) ?? throw new InvalidOperationException("Charge Rate not found");
+                ParkingSpace parkingSpace = await _repo.GetFirstAvailableSpaceAsync() ?? throw new InvalidOperationException("No available parking space");
 
-                await _repo.AddParkingAllocationAsync(parkingAllocation);
+                Vehicle vehicle = await _repo.GetVehicleByRegAsync(request.VehicleReg)
+                        ?? new Vehicle
+                        {
+                            VehicleReg = request.VehicleReg,
+                            VehicleType = vehicleTypeEnum.ToString(),
+                            ChargeRateId = chargeRate.ChargeRateId,
+                        };
+                if (vehicle.VehicleId == 0)
+                {
+                    await _repo.AddVehicleAsync(vehicle);
+                    await _db.SaveChangesAsync();
+                }
+
+                ParkingAllocation parkingAllocation = await _repo.GetActiveParkingAllocationAsync(vehicle.VehicleId) ??
+                    new ParkingAllocation
+                    {
+                        VehicleId = vehicle.VehicleId,
+                        ParkingSpaceId = parkingSpace.ParkingSpaceId,
+                        TimeIn = DateTime.UtcNow,
+                        IsAvailable = true,
+                    };
+
+                if (parkingAllocation.ParkingAllocationId == 0)
+                {
+                    //to ensure parkSpace is not ocuppied if it is still the same car
+                    parkingSpace.IsOccupied = true;
+                    toCheck = true;
+
+                    await _repo.AddParkingAllocationAsync(parkingAllocation);
+                    await _db.SaveChangesAsync();
+                }
+                await transaction.CommitAsync();
+
+                return new VehicleAllocationDto
+                {
+                    VehicleReg = vehicle.VehicleReg,
+                    SpaceNumber = !toCheck ? parkingAllocation.ParkingSpace.SpaceNumber : parkingSpace.SpaceNumber,
+                    TimeIn = parkingAllocation.TimeIn,
+                };
             }
-
-            return new VechicleAllocationDto
+            catch
             {
-                VehicleReg = vehicle.VehicleReg,
-                SpaceNumber = !toCheck ? parkingAllocation.ParkingSpace.SpaceNumber : parkingSpace.SpaceNumber,
-                TimeIn = parkingAllocation.TimeIn,
-            };
+                await transaction.RollbackAsync();
+                throw;
+            }
+            
 
         }
 
