@@ -62,45 +62,48 @@ namespace CarParkManagement.DataAccess.Data.Services
                 string siz = size.ToString();
 
                 ChargeRate chargeRate = await _repo.GetChargeRateAsync(siz) ?? throw new InvalidOperationException("Charge Rate not found");
-                ParkingSpace parkingSpace = await _repo.GetFirstAvailableSpaceAsync() ?? throw new InvalidOperationException("No available parking space");
-
-                Vehicle vehicle = await _repo.GetVehicleByRegAsync(request.VehicleReg)
-                        ?? new Vehicle
-                        {
-                            VehicleReg = request.VehicleReg,
-                            VehicleType = vehicleTypeEnum.ToString(),
-                            ChargeRateId = chargeRate.ChargeRateId,
-                        };
-                if (vehicle.VehicleId == 0)
-                {
+                
+                Vehicle? vehicle = await _repo.GetVehicleByRegAsync(request.VehicleReg);
+                bool isNewVehicle = (vehicle == null);
+                if (isNewVehicle) {
+                    vehicle = new Vehicle
+                    {
+                        VehicleReg = request.VehicleReg,
+                        VehicleType = vehicleTypeEnum.ToString(),
+                        ChargeRateId = chargeRate.ChargeRateId,
+                    };
                     await _repo.AddVehicleAsync(vehicle);
-                    await _db.SaveChangesAsync();
                 }
 
-                ParkingAllocation parkingAllocation = await _repo.GetActiveParkingAllocationAsync(vehicle.VehicleId) ??
-                    new ParkingAllocation
+
+                ParkingAllocation? parkingAllocation = isNewVehicle ? null : await _repo.GetActiveParkingAllocationAsync(vehicle!.VehicleId);
+                ParkingSpace? parkingSpace = null;
+
+                if (parkingAllocation == null)
+                {
+                    parkingSpace = await _repo.GetFirstAvailableSpaceAsync() ?? throw new InvalidOperationException("No available parking space");
+
+                    parkingSpace.IsOccupied = true;
+                    toCheck = true;
+
+                    parkingAllocation = new ParkingAllocation
                     {
-                        VehicleId = vehicle.VehicleId,
+                        Vehicle = vehicle!,
                         ParkingSpaceId = parkingSpace.ParkingSpaceId,
                         TimeIn = DateTime.UtcNow,
                         IsAvailable = true,
                     };
 
-                if (parkingAllocation.ParkingAllocationId == 0)
-                {
-                    //to ensure parkSpace is not ocuppied if it is still the same car
-                    parkingSpace.IsOccupied = true;
-                    toCheck = true;
-
                     await _repo.AddParkingAllocationAsync(parkingAllocation);
                     await _db.SaveChangesAsync();
-                }
+                }            
+
                 await transaction.CommitAsync();
 
                 return new VehicleAllocationDto
                 {
-                    VehicleReg = vehicle.VehicleReg,
-                    SpaceNumber = !toCheck ? parkingAllocation.ParkingSpace.SpaceNumber : parkingSpace.SpaceNumber,
+                    VehicleReg = vehicle!.VehicleReg,
+                    SpaceNumber = toCheck ? parkingSpace!.SpaceNumber : parkingAllocation.ParkingSpace.SpaceNumber,
                     TimeIn = parkingAllocation.TimeIn,
                 };
             }
